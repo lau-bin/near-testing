@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+      "module": "CommonJS",
+      "outDir": "out",
+      "allowJs": true,
+      "moduleResolution": "node",
+      "noImplicitAny": true,
+      "removeComments": false,
+      "preserveConstEnums": false,
+      "sourceMap": true,
+      "target": "ES2021",
+      "experimentalDecorators": true,
+      "baseUrl": "./",
+      "esModuleInterop": true,
+      "strict": true,
+      "alwaysStrict":true
+  }
+}
