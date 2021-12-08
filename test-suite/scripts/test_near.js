@@ -16,7 +16,7 @@ const networkOptions = {
 }
 var keyStore;
 var near;
-const NETWORK = networkOptions.local
+const NETWORK = networkOptions.testnet
 const config = (() => {
   switch (NETWORK) {
     case networkOptions.local:
@@ -29,6 +29,16 @@ const config = (() => {
           }
         }
       }
+    case networkOptions.testnet:
+      return {
+        networkId: "testnet",
+        nodeUrl: "https://rpc.testnet.near.org",
+        existentAcc: {
+          master: {
+            keyPath: "/home/god/.near-credentials/testnet/hardcoder.testnet.json"
+          }
+        }
+      }
   }
 })()
 
@@ -36,42 +46,6 @@ function getSubAccName(name, parentAcc) {
   return name + "." + parentAcc.accountId
 }
 const contracts = {
-  nft: {
-    name: "cheddar-coin",
-    viewMethods: [
-      "get_owner_id",
-      "get_locked_amount",
-      "get_owner",
-      "get_vesting_info",
-      "storage_balance_bounds",
-      "storage_balance_of"
-    ],
-    changeMethods: [
-      "new",
-      "ft_mint",
-      "self_burn",
-      "add_minter",
-      "remove_minter",
-      "set_metadata_icon",
-      "set_metadata_reference",
-      "set_owner",
-      "mint_vested",
-      "cancel_vesting",
-      "ft_transfer",
-      "ft_transfer_call",
-      "ft_total_supply",
-      "ft_balance_of",
-      "ft_resolve_transfer",
-      "ft_metadata",
-      "storage_deposit",
-      "storage_withdraw",
-      "storage_unregister"
-
-
-
-    ],
-    file: "cheddar_coin.wasm"
-  },
   testToken: {
     name: "test-token",
     viewMethods: [
@@ -109,11 +83,10 @@ const contracts = {
     file: "test_token.wasm"
   },
   pool: {
-    name: "p2-token-staking-fixed",
+    name: "cookie_factory_st_pool",
     viewMethods: [
       "get_contract_params",
       "status",
-      "get_collected_fee",
       "storage_balance_bounds",
       "storage_balance_of"
     ],
@@ -121,14 +94,13 @@ const contracts = {
       "new",
       "unstake",
       "close",
-      "withdraw_crop",
-      "withdraw_fee",
       "set_active",
+      "set_closeing_date",
       "storage_deposit",
       "storage_unregister"
 
     ],
-    file: "p2_token_staking_fixed.wasm"
+    file: "cookie_factory_st_pool.wasm"
   }
 }
 
@@ -227,11 +199,9 @@ async function deployContract(contractAccount, contract) {
 
   //Start
   await initNear()
-  let contractNft = contracts.nft
   let contractPool = contracts.pool
   let contractTestToken = contracts.testToken
   let masterAcc = await getAccFromFile(config.existentAcc.master.keyPath)
-  let nftContractAcc = await createAccount(masterAcc, contractNft.name)
   let poolContractAcc = await createAccount(masterAcc, contractPool.name)
   let testTokenContractAcc = await createAccount(masterAcc, contractTestToken.name)
 
@@ -242,17 +212,14 @@ async function deployContract(contractAccount, contract) {
 
   console.log("Finished creating account/s");
 
-  await deployContract(nftContractAcc, contractNft)
   await deployContract(poolContractAcc, contractPool)
   await deployContract(testTokenContractAcc, contractTestToken)
 
   console.log("Finished deploying contract/s");
 
   loadContract(user1Acc, poolContractAcc, contractPool)
-  loadContract(user1Acc, nftContractAcc, contractNft)
   loadContract(user1Acc, testTokenContractAcc, contractTestToken)
   loadContract(ownerAcc, poolContractAcc, contractPool)
-  loadContract(ownerAcc, nftContractAcc, contractNft)
   loadContract(ownerAcc, testTokenContractAcc, contractTestToken)
 
   //Begin test
@@ -263,25 +230,11 @@ async function deployContract(contractAccount, contract) {
     let poolView = contracts.pool.viewMethods
     let poolCall = contracts.pool.changeMethods
 
-    let nftCtrUser = user1Acc[nftContractAcc.accountId]
-    let nftCtrOwner = ownerAcc[nftContractAcc.accountId]
-    let nftView = contracts.nft.viewMethods
-    let nftCall = contracts.nft.changeMethods
-
     let testTokenCtrUser = user1Acc[testTokenContractAcc.accountId]
     let testTokenCtrOwner = ownerAcc[testTokenContractAcc.accountId]
     let testTokenView = contracts.testToken.viewMethods
     let testTokenCall = contracts.testToken.changeMethods
 
-
-    //Instantiate Cheddar token contract
-    console.log("Instantiate Cheddar token contract");
-    await nftCtrOwner["new"](
-      {
-        owner_id: ownerAcc.accountId
-      }
-    )
-    assert(await nftCtrOwner["get_owner_id"]() === ownerAcc.accountId, util.err("cheddar new"))
     //Instantiate Test token contract
     console.log("Instantiate Test token contract");
     await testTokenCtrOwner["new"](
@@ -292,31 +245,25 @@ async function deployContract(contractAccount, contract) {
     assert(await testTokenCtrOwner["get_owner_id"]() === ownerAcc.accountId, util.err("test token new"))
     //Instantiate pool contract
     console.log("Instantiate pool contract");
+    let closeDate = Date.now() + 31556952000;
     let poolCtrNewParams = {
       owner_id: ownerAcc.accountId,
-      cheddar: nftContractAcc.accountId,
       staked_token: testTokenContractAcc.accountId,
-      farming_start: 1638437840,
-      farming_end: 1669973838,
-      reward_rate: "2",
-      fee_rate: 1,
-      treasury: treasuryAcc.accountId
+      treasury: treasuryAcc.accountId,
+      returnable: true,
+      closeing_date: closeDate
     }
     await poolCtrOwner["new"](
       poolCtrNewParams
     )
 
     assert(util.allPropsEqual(await poolCtrOwner["get_contract_params"](), {
-      owner_id: 'owner.test.near',
-      farming_token: 'cheddar-coin.test.near',
-      staked_token: 'test-token.test.near',
-      farming_rate: '2',
+      owner_id: ownerAcc.accountId,
+      staked_token: testTokenContractAcc.accountId,
       is_active: true,
-      farming_start: 1638437840,
-      farming_end: 1669973838,
       total_staked: '0',
-      fee_rate: '1',
-      accounts_registered: 0
+      accounts_registered: 0,
+      closeing_date: closeDate
     }), util.err("pool new"))
 
     //Register user account in test token
@@ -371,27 +318,13 @@ async function deployContract(contractAccount, contract) {
       undefined,
       new BN(1)
     )
-    //Request chedda minting for user
-    console.log("Request chedda minting for user");
-    await poolCtrUser["withdraw_crop"]()
-    //Get user cheddar balance
-    console.log("Get user cheddar balance");
-    let userCheddarBalance = await nftCtrUser["ft_balance_of"](
-      {
-        account_id: user1Acc.accountId
-      }
-    )
-    console.log("User balance: ")
-    console.log(userCheddarBalance)
 
-
-    await evalFromTerminal()
+    // await evalFromTerminal()
   } catch (e) {
     console.log("Error in test:\n" + e)
   }
-
+  console.log("Test end")
   //Node cleanup
-  nftContractAcc.deleteAccount(masterAcc.accountId)
   poolContractAcc.deleteAccount(masterAcc.accountId)
   testTokenContractAcc.deleteAccount(masterAcc.accountId)
   user1Acc.deleteAccount(masterAcc.accountId)
