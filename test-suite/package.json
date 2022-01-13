@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Node script and utils to create Near tests",
   "scripts": {
-    "start": "node scripts/test_near.js"
+    "test_ddos": "node scripts/test-metapool_ddos.js",
+    "test_middle_transfer": "node scripts/test-metapool_middle-transfer.js",
+    "test_middle_transfer_wait": "node scripts/test-metapool_middle-transfer-wait.js"
   },
   "author": "Lautaro C",
   "dependencies": {

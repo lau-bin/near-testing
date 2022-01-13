@@ -3,16 +3,16 @@ const providers = require("near-api-js/lib/providers/provider");
 module.exports = class Contract{
 
   account
-  contractAccount
+  contractAccountId
 
   constructor(userAccount, contractAccount, contract){
     this.account = userAccount
-    this.contractAccount = contractAccount
+    this.contractAccountId = contractAccount
 
     contract.changeMethods.forEach(name=>{
       const fun = async function (args, gas, amount){
         const element = {
-          contractId: this.contractAccount.accountId,
+          contractId: this.contractAccountId,
           methodName: name,
           args,
           gas: gas || 300000000000000,
@@ -38,7 +38,7 @@ module.exports = class Contract{
         writable: false,
         enumerable: true,
         value: async function (args){
-          return await this.account.viewFunction(this.contractAccount.accountId, name, args);
+          return await this.account.viewFunction(this.contractAccountId, name, args);
         }
       })
     })
