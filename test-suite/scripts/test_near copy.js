@@ -201,11 +201,11 @@ async function deployContract(contractAccount, contract) {
   //Start
   await initNear()
   let contractPoolMeta = contracts.pool
-  contractPoolMeta.name = "cookie-factory-pool-meta3"
+  contractPoolMeta.name = "cookie-factory-pool-meta"
   let contractPoolStNear = Object.assign({}, contracts.pool)
-  contractPoolStNear.name = "cookie-factory-pool-stnear3"
+  contractPoolStNear.name = "cookie-factory-pool-stnear"
   let contractPoolCheddar = Object.assign({}, contracts.pool)
-  contractPoolCheddar.name = "cookie-factory-pool-cheddar3"
+  contractPoolCheddar.name = "cookie-factory-pool-cheddar"
 
 
   let contractTestToken = contracts.testToken
@@ -214,16 +214,16 @@ async function deployContract(contractAccount, contract) {
   // let testTokenContractAcc = await getAccFromFile("/home/god/.near-credentials/testnet/test-token.hardcoder.testnet.json")
 
 
-  let user1Acc = await getAccFromFile("/home/god/.near-credentials/default/cookie-user1.testnet.json")
-  let ownerAcc = await getAccFromFile("/home/god/.near-credentials/default/cookiefactory.testnet.json")
-  let treasuryAcc = await getAccFromFile("/home/god/.near-credentials/default/cookiefactory-treasury.testnet.json")
+  let user1Acc = await getAccFromFile("/home/god/.near-credentials/testnet/hardcoder.testnet.json")
+  let ownerAcc = await getAccFromFile("/home/god/.near-credentials/testnet/owner.hardcoder.testnet.json")
+  let treasuryAcc = await getAccFromFile("/home/god/.near-credentials/testnet/trasury1.hardcoder.testnet.json")
 
-  let poolMetaAcc = await createAccount(masterAcc, contractPoolMeta.name)
-  let poolStNearAcc = await createAccount(masterAcc, contractPoolStNear.name)
-  let poolCheddarAcc = await createAccount(masterAcc, contractPoolCheddar.name)
-  // let poolMetaAcc = await getAccFromFile("/home/god/.near-credentials/testnet/cookie-factory-pool-meta.hardcoder.testnet.json")
-  // let poolStNearAcc = await getAccFromFile("/home/god/.near-credentials/testnet/cookie-factory-pool-stnear.hardcoder.testnet.json")
-  // let poolCheddarAcc = await getAccFromFile("/home/god/.near-credentials/testnet/cookie-factory-pool-cheddar.hardcoder.testnet.json")
+  // let poolMetaAcc = await createAccount(masterAcc, contractPoolMeta.name)
+  // let poolStNearAcc = await createAccount(masterAcc, contractPoolStNear.name)
+  // let poolCheddarAcc = await createAccount(masterAcc, contractPoolCheddar.name)
+  let poolMetaAcc = await getAccFromFile("/home/god/.near-credentials/testnet/cookie-factory-pool-meta.hardcoder.testnet.json")
+  let poolStNearAcc = await getAccFromFile("/home/god/.near-credentials/testnet/cookie-factory-pool-stnear.hardcoder.testnet.json")
+  let poolCheddarAcc = await getAccFromFile("/home/god/.near-credentials/testnet/cookie-factory-pool-cheddar.hardcoder.testnet.json")
 
   // let poolContractAcc = await createAccount(masterAcc, "cookie-factory-pool")
   // let testTokenContractAcc = await createAccount(masterAcc, "test-token")
@@ -234,9 +234,9 @@ async function deployContract(contractAccount, contract) {
 
   console.log("Finished creating account/s");
 
-  await deployContract(poolMetaAcc, contractPoolMeta)
-  await deployContract(poolStNearAcc, contractPoolStNear)
-  await deployContract(poolCheddarAcc, contractPoolCheddar)
+  // await deployContract(poolMetaAcc, contractPoolMeta)
+  // await deployContract(poolStNearAcc, contractPoolStNear)
+  // await deployContract(poolCheddarAcc, contractPoolCheddar)
 
   // await deployContract(testTokenContractAcc, contractTestToken)
 
@@ -283,12 +283,12 @@ async function deployContract(contractAccount, contract) {
     // assert(await testTokenCtrOwner["get_owner_id"]() === ownerAcc.accountId, util.err("test token new"))
     //Instantiate pools
     console.log("Instantiate pool contract");
-    let closeDate = 1641816000000;
+    let closeDate = Date.now() + 31556952000;
     let poolCtrNewParams = {
       owner_id: ownerAcc.accountId,
       staked_token: "",
       treasury: treasuryAcc.accountId,
-      returnable: false,
+      returnable: true,
       closing_date: closeDate
     }
     console.log("Instantiating cheddar");
@@ -305,6 +305,7 @@ async function deployContract(contractAccount, contract) {
     console.log(await metaOwner["get_contract_params"]())
     console.log("Instantiating stNear");
     poolCtrNewParams.staked_token = "meta-v2.pool.testnet"
+    poolCtrNewParams.returnable = false
     await stNearOwner["new"](
       poolCtrNewParams
     )
