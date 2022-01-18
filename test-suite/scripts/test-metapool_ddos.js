@@ -16,7 +16,9 @@ const networkOptions = {
 }
 var keyStore;
 var near;
-const NETWORK = networkOptions.local
+const NETWORK = (process.env.NETWORK === "local" && networkOptions.local) || 
+                (process.env.NETWORK === "testnet" && networkOptions.testnet) ||
+                console.err("Bad network env") | process.exit(1)
 const config = (() => {
   switch (NETWORK) {
     case networkOptions.local:
@@ -35,7 +37,7 @@ const config = (() => {
         nodeUrl: "https://rpc.testnet.near.org",
         existentAcc: {
           master: {
-            keyPath: "/home/god/.near-credentials/testnet/hardcoder.testnet.json"
+            keyPath: process.env.TEST_ACCOUNT || (console.log("Path to testnet account credentials not found, it's usually found at /home/.near-credentials") | process.exit(1))
           }
         }
       }
@@ -128,22 +130,34 @@ async function getExistentAcc(name, keyPair) {
   await keyStore.setKey(config.networkId, name, keyPair)
   return await near.account(name)
 }
-
 async function createAccount(masterAccount, name) {
   let accountName
-  if (name.lenght >= 32) {
-    accountName = name
-  } else {
+  if (name) {
     accountName = getSubAccName(name, masterAccount)
+  } else {
+    accountName = getSubAccName(makeid(63 - masterAccount.accountId.length), masterAccount)
   }
-  let keyPair = await getKeyPairOfAcc(masterAccount.accountId)
-  await masterAccount.createAccount(
-    accountName,
-    keyPair.getPublicKey(),
-    new BN(10).pow(new BN(27))
-  );
-  return getExistentAcc(accountName, keyPair)
+
+  let keypair
+  try{
+    let keyFile = require(config.existentAcc.master.keyPath);
+    let key = keyFile.secret_key || keyFile.private_key
+    keypair = getKeyPair(key)
+    await keyStore.setKey(config.networkId, accountName, keypair)
+    await masterAccount.createAccount(
+      accountName,
+      keypair.getPublicKey(),
+      new BN(10).pow(new BN(27))
+    );
+  }catch (e){
+    console.log("Error creating account, please fix it or re run the test")
+    console.log(e)
+    process.exit(1)
+  }
+  let account = getExistentAcc(accountName, keypair)
+  return account
 }
+
 
 async function getKeyPairOfAcc(accountId) {
   return await keyStore.getKey(config.networkId, accountId)
@@ -164,6 +178,31 @@ function loadContract(userAccount, contractAccount, contract) {
 async function deployContract(contractAccount, contract) {
   await contractAccount.deployContract(fs.readFileSync(path.join(__dirname, "..", "res", contract.file)))
   console.log("Contract deployed: " + contract.name)
+}
+
+var accountNames = []
+function makeid(length) {
+  var result           = '';
+  var characters       = 'abcdefghijklmnopqrstuvwxyz';
+  var charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * 
+charactersLength));
+ }
+ if (accountNames.includes(result)){
+  makeid(length)
+ }
+ accountNames.push(result)
+ return result;
+}
+async function deleteAccounts(accounts, beneficiary){
+  for (let i = 0; i < accounts.length; i++){
+    try{
+      accounts[i].deleteAccount(beneficiary.accountId)
+    }catch(e){
+      console.log("Error deleting " + accounts[i].accountId)
+    }
+  }
 }
 
 
@@ -197,15 +236,24 @@ async function deployContract(contractAccount, contract) {
 
   //Start
   await initNear()
+  // never change this line
   let masterAcc = await getAccFromFile(config.existentAcc.master.keyPath)
+  let accounts = []
 
-  let user1Acc = await createAccount(masterAcc, "user1")
-  let ownerAcc = await createAccount(masterAcc, "owner")
-  let treasuryAcc = await createAccount(masterAcc, "treasury")
-  let operatorAcc = await createAccount(masterAcc, "operator")
-  let metapoolAcc = await createAccount(masterAcc, contracts.metapool.name)
-  let testAcc = await createAccount(masterAcc, contracts.test.name)
-  let testAcc2 = await createAccount(masterAcc, contracts.test.name + "_2")
+  let user1Acc = await createAccount(masterAcc)
+  accounts.push(user1Acc)
+  let ownerAcc = await createAccount(masterAcc)
+  accounts.push(ownerAcc)
+  let treasuryAcc = await createAccount(masterAcc)
+  accounts.push(treasuryAcc)
+  let operatorAcc = await createAccount(masterAcc)
+  accounts.push(operatorAcc)
+  let metapoolAcc = await createAccount(masterAcc)
+  accounts.push(metapoolAcc)
+  let testAcc = await createAccount(masterAcc)
+  accounts.push(testAcc)
+  let testAcc2 = await createAccount(masterAcc)
+  accounts.push(testAcc2)
 
   console.log("Finished creating account/s");
 
@@ -378,6 +426,9 @@ async function deployContract(contractAccount, contract) {
   } catch (e) {
     console.log("Error in test:\n" + e)
   }
+  // try to delete accounts to return near to master account
+  console.log("try to delete accounts to return near to master account")
+  await deleteAccounts(accounts, masterAcc)
   console.log("Done");
 })()
 
