@@ -8,6 +8,7 @@ const { assert } = require("console");
 const vm = require('vm');
 const util = require("../util/util")
 
+
 const GAS_NORMAL = "3000000000000"
 const networkOptions = {
   local: Symbol(),

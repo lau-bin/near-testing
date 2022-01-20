@@ -23,8 +23,24 @@ function allPropsEqual(a, b) {
   return true;
 }
 
+function* times(x) {
+  for (var i = 0; i < x; i++)
+    yield i;
+}
+
+function replacer(key, value) {
+  if(value instanceof Map) {
+    return Object.fromEntries(value.entries())
+  } else {
+    return value
+  }
+}
+
 module.exports = {
   allPropsEqual,
   areEqualShallow,
-  err
+  err,
+  times,
+  replacer
 }
+
