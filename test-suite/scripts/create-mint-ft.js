@@ -93,12 +93,12 @@ async function getExistentAcc(name, keyPair) {
   await keyStore.setKey(config.networkId, name, keyPair)
   return await near.account(name)
 }
-async function createAccount(masterAccount, name) {
+async function createAccount(masterAccount, name, length, near) {
   let accountName
   if (name) {
     accountName = getSubAccName(name, masterAccount)
   } else {
-    accountName = getSubAccName(makeid(63 - masterAccount.accountId.length), masterAccount)
+    accountName = getSubAccName(makeid(length || 63 - masterAccount.accountId.length), masterAccount)
   }
 
   let keypair
@@ -110,7 +110,7 @@ async function createAccount(masterAccount, name) {
     await masterAccount.createAccount(
       accountName,
       keypair.getPublicKey(),
-      new BN(10).pow(new BN(27))
+      new BN(nearAPI.utils.format.parseNearAmount(near ? String(near) : "1"))
     );
   }catch (e){
     console.log("Error creating account, please fix it or re run the test")
@@ -205,8 +205,11 @@ async function deleteAccounts(accounts, beneficiary){
   let userAcc1 = await createAccount(masterAcc)
   let userAcc2 = await createAccount(masterAcc)
 
-  let wnearAcc = await createAccount(masterAcc)
-  let stNearAcc = await createAccount(masterAcc)
+  // let wnearAcc = await createAccount(masterAcc, undefined, 5, 10)
+  // let stNearAcc = await createAccount(masterAcc, undefined, 5, 10)
+
+  let wnearAcc = await getExistentAcc("kfpgp.aurora-testing.testnet", config.existentAcc.master.keyPath)
+  let stNearAcc = await getExistentAcc("qhncw.aurora-testing.testnet", config.existentAcc.master.keyPath)
 
   console.log("Finished creating account/s");
 
@@ -217,7 +220,7 @@ async function deleteAccounts(accounts, beneficiary){
   loadContract(masterAcc, wnearAcc.accountId, contracts.ft)
   loadContract(masterAcc, stNearAcc.accountId, contracts.ft)
 
-  function initContracts(){
+  async function initContracts(){
 
     await deployContract(wnearAcc, contracts.ft)
     await deployContract(stNearAcc, contracts.ft)
@@ -231,7 +234,7 @@ async function deleteAccounts(accounts, beneficiary){
         name: "stNEAR test token",
         symbol: "STNEARTEST",
         reference: "",
-        reference_hash: "",
+        reference_hash: "709cf450782012061eb34f6c547021ce096fe478761e6e5ece9e1acb1c538413",
         decimals: 24
       }
     )
@@ -245,21 +248,21 @@ async function deleteAccounts(accounts, beneficiary){
         name: "wNEAR test token",
         symbol: "WNEARTEST",
         reference: "",
-        reference_hash: "",
+        reference_hash: "709cf450782012061eb34f6c547021ce096fe478761e6e5ece9e1acb1c538413",
         decimals: 24
       }
     )
   }
-  function mintTokens(){
+  async function mintTokens(account){
     console.log("mint stnear")
-    let minBal = await masterAcc[stNearAcc.accountId]["storage_minimum_balance"]()
-    await masterAcc[stNearAcc.accountId]["storage_deposit"](
-      {
-        account_id: userAcc1.accountId
-      },
-      undefined,
-      new BN(minBal)
-    )
+    // let minBal = await masterAcc[stNearAcc.accountId]["storage_minimum_balance"]()
+    // await masterAcc[stNearAcc.accountId]["storage_deposit"](
+    //   {
+    //     account_id: account || userAcc1.accountId
+    //   },
+    //   undefined,
+    //   new BN(minBal)
+    // )
     await masterAcc[stNearAcc.accountId]["mint"](
       {
         amount: "10000000000000000000000000000"
@@ -267,20 +270,22 @@ async function deleteAccounts(accounts, beneficiary){
     )
     await masterAcc[stNearAcc.accountId]["ft_transfer"](
       {
-        receiver_id: userAcc1.accountId,
+        receiver_id: account || userAcc1.accountId,
         amount: "100000000000000000000000000"
-      }
+      },
+      undefined,
+      new BN(1)
     )
 
     console.log("mint wNear")
-    let minBal = await masterAcc[wnearAcc.accountId]["storage_minimum_balance"]()
-    await masterAcc[wnearAcc.accountId]["storage_deposit"](
-      {
-        account_id: userAcc2.accountId
-      },
-      undefined,
-      new BN(minBal)
-    )
+    // let minBal2 = await masterAcc[wnearAcc.accountId]["storage_minimum_balance"]()
+    // await masterAcc[wnearAcc.accountId]["storage_deposit"](
+    //   {
+    //     account_id: account || userAcc2.accountId
+    //   },
+    //   undefined,
+    //   new BN(minBal2)
+    // )
     await masterAcc[wnearAcc.accountId]["mint"](
       {
         amount: "10000000000000000000000000000"
@@ -288,9 +293,11 @@ async function deleteAccounts(accounts, beneficiary){
     )
     await masterAcc[wnearAcc.accountId]["ft_transfer"](
       {
-        receiver_id: userAcc2.accountId,
+        receiver_id: account || userAcc2.accountId,
         amount: "100000000000000000000000000"
-      }
+      },
+      undefined,
+      new BN(1)
     )
   }
 
@@ -298,9 +305,9 @@ async function deleteAccounts(accounts, beneficiary){
   try {
     console.log("Begin");
 
-    initContracts()
+    // await initContracts()
 
-    mintTokens()
+    await mintTokens("aurora")
 
   } catch (e) {
     console.log("Error:\n" + e)

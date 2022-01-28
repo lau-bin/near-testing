@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Node script and utils to create Near tests",
   "scripts": {
-    "start": "node scripts/test_near.js"
   },
   "author": "Lautaro C",
   "dependencies": {
