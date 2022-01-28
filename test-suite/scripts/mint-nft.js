@@ -108,16 +108,16 @@ async function getExistentAcc(name, keyPair) {
   await keyStore.setKey(config.networkId, name, keyPair)
   return await near.account(name)
 }
-async function createAccount(masterAccount, name) {
+async function createAccount(masterAccount, name, length, near) {
   let accountName
   if (name) {
     accountName = getSubAccName(name, masterAccount)
   } else {
-    accountName = getSubAccName(makeid(63 - masterAccount.accountId.length), masterAccount)
+    accountName = getSubAccName(makeid(length || 63 - masterAccount.accountId.length), masterAccount)
   }
 
   let keypair
-  try {
+  try{
     let keyFile = require(config.existentAcc.master.keyPath);
     let key = keyFile.secret_key || keyFile.private_key
     keypair = getKeyPair(key)
@@ -125,14 +125,15 @@ async function createAccount(masterAccount, name) {
     await masterAccount.createAccount(
       accountName,
       keypair.getPublicKey(),
-      new BN(10).pow(new BN(27))
+      new BN(nearAPI.utils.format.parseNearAmount(near ? String(near) : "1"))
     );
-  } catch (e) {
+  }catch (e){
     console.log("Error creating account, please fix it or re run the test")
     console.log(e)
     process.exit(1)
   }
   let account = getExistentAcc(accountName, keypair)
+  console.log(account.accountId)
   return account
 }
 
@@ -160,24 +161,24 @@ async function deployContract(contractAccount, contract) {
 
 var accountNames = []
 function makeid(length) {
-  var result = '';
-  var characters = 'abcdefghijklmnopqrstuvwxyz';
+  var result           = '';
+  var characters       = 'abcdefghijklmnopqrstuvwxyz';
   var charactersLength = characters.length;
-  for (var i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() *
-      charactersLength));
-  }
-  if (accountNames.includes(result)) {
-    makeid(length)
-  }
-  accountNames.push(result)
-  return result;
+  for ( var i = 0; i < length; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * 
+charactersLength));
+ }
+ if (accountNames.includes(result)){
+  makeid(length)
+ }
+ accountNames.push(result)
+ return result;
 }
-async function deleteAccounts(accounts, beneficiary) {
-  for (let i = 0; i < accounts.length; i++) {
-    try {
+async function deleteAccounts(accounts, beneficiary){
+  for (let i = 0; i < accounts.length; i++){
+    try{
       accounts[i].deleteAccount(beneficiary.accountId)
-    } catch (e) {
+    }catch(e){
       console.log("Error deleting " + accounts[i].accountId)
     }
   }
@@ -300,17 +301,16 @@ function makeNFT(nft) {
   //Start
   await initNear()
   // never change this line
-  let test = true
-  let contractAcc
+  let test = false
+  let contractAcc = test ? undefined : {accountId:"fxxrjbtytitepujvneilgglnokzjyldyjupdxriemz.cookiefactory.testnet"}
   let owner
   if (test){
     masterAcc = await getAccFromFile(config.existentAcc.master.keyPath)
-    owner = await createAccount(masterAcc)
-    contractAcc = await createAccount(masterAcc)
+    owner = await createAccount(masterAcc, undefined, undefined, 5)
+    contractAcc = await createAccount(masterAcc, undefined, undefined, 5)
   }
   else{
-    contractAcc = await getAccFromFile(config.existentAcc.master.keyPath)
-    owner = await getAccFromFile(config.existentAcc.master.keyPath)
+    owner = await getAccFromFile("jrclgohabjefkufcmuiyumcamjzlpossttqmwriexn.cookiefactory.testnet.json")
   }
 
   console.log("Finished creating account/s");
@@ -354,15 +354,15 @@ function makeNFT(nft) {
     console.log("Begin");
 
     // deploy contract
-    console.log("Deploying contract")
-    await deploy()
+    // console.log("Deploying contract")
+    // await deploy()
 
-    // mint 30 nft1
-    // console.log("Minting")
-    // for (let i of util.times(1)){
-    //   console.log("Nº " + i)
-    //   await mintNFT(makeNFT(nftN1))
-    // }
+    // mint NFT
+    console.log("Minting")
+    for (let i of util.times(1)){
+      console.log("Nº " + i)
+      await mintNFT(makeNFT(nftN1))
+    }
 
 
   } catch (e) {
