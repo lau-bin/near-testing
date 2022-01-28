@@ -209,7 +209,11 @@ const nftBase = {
   token_type: undefined
 }
 const tokenTypes = {
-  token1: "token1"
+  token1: "token1",
+  token2: "token2",
+  token3: "token3",
+  token4: "token4",
+  token5: "token5"
 }
 
 const nftContractData = {
@@ -220,7 +224,11 @@ const nftContractData = {
     symbol: "NFTS"
   },
   supply_cap_by_type: {
-    [tokenTypes.token1]: "3"
+    [tokenTypes.token1]: "1",
+    [tokenTypes.token2]: "10",
+    [tokenTypes.token3]: "100",
+    [tokenTypes.token4]: "1000",
+    [tokenTypes.token5]: "10000"
   },
   locked: true
 }
@@ -228,12 +236,12 @@ const nftContractData = {
 const nftN1 = Object.assign({}, nftBase)
 nftN1.metadata.title = "Token Nº1"
 nftN1.metadata.description = "Some desc"
-nftN1.metadata.media = "url"
+nftN1.metadata.media = "https://cookiefactory.co/output/582.png"
 nftN1.metadata.media_hash = "709cf450782012061eb34f6c547021ce096fe478761e6e5ece9e1acb1c538413"
 nftN1.metadata.reference = "ref url"
 nftN1.metadata.reference_hash = "709cf450782012061eb34f6c547021ce096fe478761e6e5ece9e1acb1c538413"
 nftN1.perpetual_royalties = new Map([["acc1", 2]])
-nftN1.token_type = tokenTypes.token1
+// nftN1.token_type = tokenTypes.token1
 
 function makeNFT(nft) {
   try {
@@ -302,7 +310,7 @@ function makeNFT(nft) {
   }
   else{
     contractAcc = await getAccFromFile(config.existentAcc.master.keyPath)
-    owner = await getAccFromFile("")
+    owner = await getAccFromFile(config.existentAcc.master.keyPath)
   }
 
   console.log("Finished creating account/s");
@@ -350,11 +358,11 @@ function makeNFT(nft) {
     await deploy()
 
     // mint 30 nft1
-    console.log("Minting")
-    for (let i of util.times(30)){
-      console.log("Nº " + i)
-      await mintNFT(makeNFT(nftN1))
-    }
+    // console.log("Minting")
+    // for (let i of util.times(1)){
+    //   console.log("Nº " + i)
+    //   await mintNFT(makeNFT(nftN1))
+    // }
 
 
   } catch (e) {
