@@ -310,7 +310,7 @@ function makeNFT(nft) {
     contractAcc = await createAccount(masterAcc, undefined, undefined, 5)
   }
   else{
-    owner = await getAccFromFile("jrclgohabjefkufcmuiyumcamjzlpossttqmwriexn.cookiefactory.testnet.json")
+    owner = await getAccFromFile(config.existentAcc.master.keyPath)
   }
 
   console.log("Finished creating account/s");
