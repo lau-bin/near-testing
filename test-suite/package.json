@@ -3,13 +3,17 @@
   "version": "1.0.0",
   "description": "Node script and utils to create Near tests",
   "scripts": {
-    "start": "node scripts/test_near.js"
+    "run": "ts-node util/start.ts"
   },
+  "type": "module",
   "author": "Lautaro C",
   "dependencies": {
     "bn.js": "^5.2.0",
+    "@types/bn.js": "^5.1.0",
     "near-api-js": "^0.43.1",
     "typescript": "^4.5.2",
-    "@types/node": "14.14.31"
+    "@types/node": "14.14.31",
+    "utilities": "file:/home/god/Proyectos/libs/utilities",
+    "ts-node": "^10.4.0"
   }
 }
