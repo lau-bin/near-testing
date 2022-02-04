@@ -1,5 +1,6 @@
 # Testing platform for Near
 Supports testnet and nearup
+Use the functions provided in "lib" to make your scripts
 
 ## Considerations
 **Nearup**  
@@ -13,6 +14,3 @@ Consider that the balance of the master account is limited on some networks
 ### NETWORK
 * "testnet"
 * "local" if you will use nearup
-
-### TEST_ACCOUNT
-* the path to your testnet account credentials, usually found at /home/.near-credentials

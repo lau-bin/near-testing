@@ -25,18 +25,11 @@ function* times(x) {
     yield i;
 }
 
-function replacer(key, value) {
+export function replacer(key, value) {
   if(value instanceof Map) {
     return Object.fromEntries(value.entries())
   } else {
     return value
   }
-}
-
-module.exports = {
-  allPropsEqual,
-  areEqualShallow,
-  times,
-  replacer
 }
 

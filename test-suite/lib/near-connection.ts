@@ -1,4 +1,4 @@
-import { NetworkConfig } from "config";
+import { NetworkConfig } from "./config";
 import { copyFile } from "fs";
 import {keyStores, connect, Near} from "near-api-js"
 import {hasValue} from "utilities"
@@ -12,7 +12,7 @@ export class NearConncetion {
     this.networkId = networkId
   }
 
-  static async build(config: NetworkConfig){
+  static async build(config: NetworkConfig<any>){
     let instance = new this(config.networkId)
     instance._near = await connect({
       keyStore: instance.keyStore,

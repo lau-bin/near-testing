@@ -1,4 +1,4 @@
-import {ContractSpec} from "../util/contract"
+import {ContractSpec} from "../lib/contract"
 
 export const contracts = {
   nft: ContractSpec({
@@ -109,6 +109,6 @@ export const contracts = {
       "get_registered_accounts"
 
     ],
-    wasmName: "cookie_factory_st_pool.wasm"
+    wasmName: "nft_market.wasm"
   })
 }

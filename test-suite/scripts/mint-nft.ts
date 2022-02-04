@@ -1,183 +1,131 @@
+import { existsSync, fstat, readdirSync, writeFileSync } from "fs"
+import { Http2ServerRequest } from "http2"
+import { Agent } from "https"
+import { assert } from "utilities"
+import { tokenTypes } from "./deploy"
+import http from "http"
+import { promisify } from "node:util"
+import { Stream, Writable } from "stream"
+import { createHash } from "crypto"
+import { Contract } from "../lib/contract"
+import { contracts } from "./contractSpec"
+import { getExistentAcc } from "../lib/near"
+import { getConfig } from "../lib/config"
+import { NearConncetion } from "../lib/near-connection"
+import { Logger } from "../lib/logger"
+import { BN } from "bn.js"
 
-function paddDate(date) {
+
+const parsedDate = (() => {
+  let currentDate = new Date()
+  let month = paddDate(String((currentDate.getMonth() + 1)))
+  let day = paddDate(currentDate.getDate().toString())
+  let hour = paddDate(currentDate.getHours())
+  let minute = paddDate(currentDate.getMinutes())
+  let second = paddDate(currentDate.getSeconds())
+  return `${currentDate.getFullYear()}-${month}-${day}T${hour}:${minute}:${second}`
+})()
+
+let nfts = await parseNFTFromFile("cookiefactory.co", 2, 20)
+
+let fullNFT = nfts.map(nft => {
+  let fullNFT: NFT = {
+    perpetual_royalties: [{
+      account: "user1.cookiefactory.testnet",
+      rlty: 1
+    }],
+    metadata: {
+      copies: "0",
+      description: "A good quality NFT",
+      issued_at: parsedDate,
+      media: nft.url,
+      media_hash: nft.hash,
+      title: nft.name
+    }
+  }
+  return fullNFT
+})
+let config = getConfig()
+let connection = await NearConncetion.build(config)
+
+let nftOwnerAcc = await getExistentAcc(config.existentAcc.owner.name, connection, config.existentAcc.owner.key)
+let nftContract = new Contract(config.existentAcc.nft_simple.name, contracts.nft, "nft")
+Logger.info("starting to mint nfts", true)
+
+for (let nft of fullNFT) {
+  let rlty = {}
+  nft.perpetual_royalties.forEach(el => {
+    Object.defineProperty(rlty, el.account, {
+      enumerable: true,
+      value: el.rlty
+    })
+  })
+
+  await nftContract.call.nft_mint(
+    nftOwnerAcc,
+    {
+      metadata: nft.metadata,
+      perpetual_royalties: rlty,
+      receiver_id: "cookiefactory.testnet"
+    },
+    undefined,
+    new BN("10200000000000000000000")
+  )
+  Logger.info("minted " + nft.metadata.title, true)
+}
+
+type NFT = {
+  metadata: {
+    title: string,
+    description: string,
+    media: string,
+    media_hash: string,
+    copies: "0",
+    issued_at: string
+  },
+  perpetual_royalties: { account: string, rlty: number }[]
+}
+
+function paddDate(date: string | number) {
+  date = String(date)
   if (date.length == 1) date = "0" + date
   return date
 }
-const currentDate = new Date()
-let month = paddDate(String((currentDate.getMonth() + 1)))
-let day = paddDate(currentDate.getDate().toString())
-let hour = paddDate(currentDate.getHours())
-let minute = paddDate(currentDate.getMinutes())
-let second = paddDate(currentDate.getSeconds())
-let parsedDate = `${currentDate.getFullYear()}-${month}-${day}T${hour}:${minute}:${second}`
-const nftBase = {
-  metadata: {
-    title: undefined,
-    description: undefined,
-    media: undefined,
-    media_hash: undefined,
-    copies: "0",
-    issued_at: parsedDate,
-    starts_at: parsedDate,
-    reference: undefined,
-    reference_hash: undefined
-  },
-  perpetual_royalties: undefined,
-  token_type: undefined
-}
-const tokenTypes = {
-  token1: "token1",
-  token2: "token2",
-  token3: "token3",
-  token4: "token4",
-  token5: "token5"
-}
 
-
-
-const nftN1 = Object.assign({}, nftBase)
-nftN1.metadata.title = "Token Nº1"
-nftN1.metadata.description = "Some desc"
-nftN1.metadata.media = "https://cookiefactory.co/output/582.png"
-nftN1.metadata.media_hash = "709cf450782012061eb34f6c547021ce096fe478761e6e5ece9e1acb1c538413"
-nftN1.metadata.reference = "ref url"
-nftN1.metadata.reference_hash = "709cf450782012061eb34f6c547021ce096fe478761e6e5ece9e1acb1c538413"
-nftN1.perpetual_royalties = new Map([["acc1", 2]])
-// nftN1.token_type = tokenTypes.token1
-
-function makeNFT(nft) {
-  try {
-    let nftHistory = JSON.parse(fs.readFileSync(path.join("res","nftHistory.json")))
-    let lastCopy = nftHistory[nft.token_type]
-    if (lastCopy != undefined) {
-      nft.metadata.copies = String(lastCopy + 1)
-      nftHistory[nft.token_type]++
-    }
-    else{
-      nftHistory[nft.token_type] = 0
-    }
-    console.log("Copy Nº: " + nft.metadata.copies)
-    fs.writeFileSync(path.join("res","nftHistory.json"), JSON.stringify(nftHistory))
-    return nft
-  } catch (e) {
-    console.error(e)
-    process.exit(1)
+async function parseNFTFromFile(ipAddress: string, from: number, to: number) {
+  let agent = new Agent({ maxCachedSessions: 0, keepAlive: true })
+  let options = {
+    hostname: ipAddress,
+    port: 80,
+    path: '',
+    method: 'GET',
+    // protocol: "https:"
+  };
+  let nfts: { hash: string, url: string, name: string }[] = []
+  for (let i = from; i <= to; i++) {
+    let stream = new Stream.Transform()
+    let img: Uint8Array[] = []
+    options.path = `/output/${i}.png`
+    let response = await new Promise<Buffer>((resolve, reject) => {
+      http.request(options, (res) => {
+        res.on('data', function (chunk) {
+          stream.push(chunk)
+        });
+        res.on('end', function () {
+          img.push(stream.read())
+          resolve(Buffer.concat(img))
+        });
+      }).end()
+    })
+    let hash = createHash("sha256", { encoding: "binary" }).update(response).digest("hex")
+    nfts.push({
+      hash,
+      url: "https://" + options.hostname + options.path,
+      name: "NFT Nº " + i
+    })
   }
+
+  return nfts
 }
 
 
-
-async function main() {
-  async function evalFromTerminal() {
-
-    console.log("Interactive mode:")
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-    let interactive = true
-    while (interactive) {
-      await new Promise(resolve => {
-        rl.question("_>", async (command) => {
-          if (command === "return") {
-            rl.close()
-            interactive = false
-            return resolve()
-          }
-          try{
-            await eval(command)
-          }catch(e){
-            console.error("Error: ")
-            console.error(e)
-          }
-          resolve()
-        })
-      })
-    }
-  }
-
-
-  //Start
-  await initNear()
-  let ownerAcc = await getAccFromFile(process.env.OWNER_ACC)
-  console.log("Finished creating account/s");
-
-  // set option to start console instead of script
-  if (process.argv.length >= 2 && process.argv[2] === "-i") {
-    await evalFromTerminal()
-    return
-  }
-  //Begin
-  try {
-
-    console.log("Begin");
-
-    // deploy contract
-    console.log("Deploying contract")
-    await deployNFTCtr(ownerAcc)
-
-    // mint NFT
-    // console.log("Minting")
-    // loadContract(ownerAcc, process.env.NFT_ACCOUNT_ID, contracts.nft)
-
-    // for (let i of util.times(1)){
-    //   console.log("Nº " + i)
-    //   await mintNFT(makeNFT(nftN1))
-    // }
-
-
-  } catch (e) {
-    console.log("Error:\n" + e)
-  }
-  console.log("Done");
-
-  if (process.argv.length >= 2 && process.argv[2] === "-il") {
-    await evalFromTerminal()
-    return
-  }
-} main()
-
-async function mintNFT(nft, contract) {
-  console.log("Minting: " + nft.metadata.title)
-  await contract["nft_mint"](
-    {
-      metadata: nft.metadata,
-      perpetual_royalties: Object.fromEntries(nft.perpetual_royalties),
-      token_type: nft.token_type
-    },
-    undefined,
-    new BN(nearAPI.utils.format.parseNearAmount("1"))
-  )
-}
-
-async function deployNFTCtr(ownerAcc) {
-  let masterAcc = await getAccFromFile(config.existentAcc.master.keyPath)
-  let contractAcc = await createAccount(masterAcc, "nft-simple", 15, 5)
-  console.log("contract NFT account:")
-  console.log(contractAcc.accountId)
-  console.log("Finished creating account/s");
-  await deployContract(contractAcc, contracts.nft)
-  loadContract(contractAcc, contractAcc.accountId, contracts.nft)
-  console.log("Finished deploying contract/s");
-
-  // instantiate contract
-  console.log("instantiate market contract")
-  await contractAcc[contractAcc.accountId]["new"](
-    {
-      owner_id: ownerAcc.accountId,
-      metadata: {
-        spec: "1.0.0",
-        name: "nft-simple",
-        symbol: "NFTS"
-      },
-      supply_cap_by_type: {
-        [tokenTypes.token1]: "1",
-        [tokenTypes.token2]: "10",
-        [tokenTypes.token3]: "100",
-        [tokenTypes.token4]: "1000",
-        [tokenTypes.token5]: "10000"
-      },
-      locked: true
-    }
-  )
-}

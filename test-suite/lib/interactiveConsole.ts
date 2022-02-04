@@ -28,3 +28,16 @@ async function run(){
   }
   console.log("<Console closed>")
 }
+
+export async function readLine(){
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+  return new Promise<string>(resolve => {
+    rl.question("_>", (command) => {
+      rl.close()
+      return resolve(command)
+    })
+  })
+}

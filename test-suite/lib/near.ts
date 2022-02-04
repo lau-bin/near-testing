@@ -1,5 +1,4 @@
-import { NetworkConfig } from "config"
-import { assert } from "console"
+import { NetworkConfig } from "./config"
 import { Account, utils, keyStores, Near } from "near-api-js"
 import { AccountBalance } from "near-api-js/lib/account"
 import { NAMED_ACCOUNT_MAX_LENGTH } from "./constants"
@@ -10,17 +9,18 @@ import { Logger } from "./logger"
 import {_ContractSpec} from "./contract"
 import { readFileSync } from "fs"
 import path from "path"
+import { assert, isString } from "utilities"
 
 export function getSubAccName(name: string, parentAccName: string) {
   let result = name + "." + parentAccName
-  assert(result.length > NAMED_ACCOUNT_MAX_LENGTH, ACCOUNT_ID_TOO_BIG + " is " + result.length)
+  assert(result.length <= NAMED_ACCOUNT_MAX_LENGTH, ACCOUNT_ID_TOO_BIG + " is " + result.length)
   return result
 }
 
 export async function getAccFromFile(file: string, connection: NearConncetion): Promise<Account> {
   let keyFile: { secret_key: string, private_key: string, account_id: string }
   try {
-    keyFile = require(file);
+    keyFile = JSON.parse(readFileSync(file).toString())
   }
   catch (e) {
     throw Error(`file: ${file} not found`)
@@ -35,11 +35,20 @@ interface KeyFile {
   private_key?: string
   account_id: string
 }
-function getKeyPair(privKey: string) {
+export type PrivKey = string
+export function getKeyPair(privKey: string) {
   return utils.KeyPair.fromString(privKey)
 }
 
-export async function getExistentAcc(name: string, connection: NearConncetion, keyPair: utils.key_pair.KeyPair): Promise<Account> {
+export async function getKey(account: Account, connection : NearConncetion): Promise<PrivKey>{
+  let key = await connection.keyStore.getKey(connection.networkId, account.accountId)
+  return key.toString()
+}
+
+export async function getExistentAcc(name: string, connection: NearConncetion, keyPair: utils.key_pair.KeyPair | string): Promise<Account> {
+  if (isString(keyPair)){
+    keyPair = getKeyPair(keyPair)
+  }
   await connection.keyStore.setKey(connection.networkId, name, keyPair)
   return await connection.near.account(name)
 }
@@ -57,7 +66,7 @@ export async function createSubAccount(masterAccount: Account, connection: NearC
         accountName = getSubAccName(name + "_" + id, masterAccount.accountId)
       }
       else {
-        assert(name.length + masterAccount.accountId.length <= NAMED_ACCOUNT_MAX_LENGTH, ACCOUNT_ID_TOO_BIG + " is " + name.length + masterAccount.accountId.length)
+        assert(name.length + masterAccount.accountId.length + 1 <= NAMED_ACCOUNT_MAX_LENGTH, ACCOUNT_ID_TOO_BIG + " is " + name.length + masterAccount.accountId.length)
         accountName = getSubAccName(name, masterAccount.accountId)
       }
     }
@@ -93,8 +102,8 @@ export async function getKeyPairOfAcc(accountId: string, connection: NearConncet
   return await connection.keyStore.getKey(connection.networkId, accountId)
 }
 
-async function deployContract(contractAccount: Account, contract: _ContractSpec) {
-  await contractAccount.deployContract(readFileSync(contract.wasmName))
+export async function deployContract(contractAccount: Account, contract: _ContractSpec) {
+  await contractAccount.deployContract(readFileSync(path.join(global.__dirname, "res", contract.wasmName)))
   let msg = `contract ${contract.name} deployed at ${contractAccount.accountId}`
   Logger.info(msg, true)
 }
@@ -110,7 +119,7 @@ function makeRandomid(length: number) {
 
   return result;
 }
-async function deleteAccounts(accounts: Account[], beneficiary: Account) {
+export async function deleteAccounts(accounts: Account[], beneficiary: Account) {
   for (let i = 0; i < accounts.length; i++) {
     try {
       accounts[i].deleteAccount(beneficiary.accountId)

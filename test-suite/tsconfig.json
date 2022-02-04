@@ -1,18 +1,18 @@
 {
   "compilerOptions": {
-      "module": "esnext",
-      "outDir": "out",
-      "allowJs": true,
-      "moduleResolution": "node",
-      "noImplicitAny": true,
-      "removeComments": false,
-      "preserveConstEnums": false,
-      "sourceMap": true,
-      "target": "ES2021",
-      "experimentalDecorators": true,
-      "baseUrl": "./",
-      "esModuleInterop": true,
-      "strict": true,
-      "alwaysStrict":true
+    "module": "ESNext",
+    "outDir": "out",
+    "allowJs": true,
+    "moduleResolution": "nodenext",
+    "noImplicitAny": true,
+    "removeComments": false,
+    "preserveConstEnums": false,
+    "sourceMap": true,
+    "target": "es2021",
+    "experimentalDecorators": true,
+    "baseUrl": "./",
+    "esModuleInterop": true,
+    "strict": true,
+    "alwaysStrict": true,
   }
 }
