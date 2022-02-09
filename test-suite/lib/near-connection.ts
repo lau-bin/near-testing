@@ -4,7 +4,7 @@ import {keyStores, connect, Near} from "near-api-js"
 import {hasValue} from "utilities"
 
 export class NearConncetion {
-  keyStore = new keyStores.InMemoryKeyStore();
+  keyStore = new keyStores.InMemoryKeyStore()
   private _near?: Near
   networkId: NetworkId
 
@@ -18,7 +18,7 @@ export class NearConncetion {
       keyStore: instance.keyStore,
       networkId: config.networkId,
       nodeUrl: config.nodeUrl,
-    });
+    })
     return instance
   }
 
