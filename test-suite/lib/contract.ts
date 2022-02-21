@@ -33,12 +33,7 @@ export class Contract<T extends _ContractSpec, S extends Account | string> {
           attachedDeposit
         } 
         let caller = hasValue(account) ? account : this.account as Account
-        const rawResult = await caller.functionCall(element);
-        if ((rawResult?.status as FinalExecutionStatus).SuccessValue !== ''){
-          return getTransactionLastResult(rawResult);
-        }else{
-          return
-        }
+        return await caller.functionCall(element);
       }
       
       Object.defineProperty(this.call, methodName, {
