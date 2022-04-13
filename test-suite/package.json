@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Node script and utils to create Near tests",
   "scripts": {
-    "start": "NODE_NO_WARNINGS=1 node --loader ts-node/esm --experimental-specifier-resolution=node lib/start.ts"
+    "start": "NODE_NO_WARNINGS=1 node --loader ts-node/esm --experimental-specifier-resolution=node scripts/util.ts"
   },
   "type": "module",
   "author": "Lautaro C",
@@ -11,7 +11,8 @@
     "bn.js": "^5.2.0",
     "near-api-js": "^0.43.1",
     "ts-node": "^10.4.0",
-    "utilities": "file:../../../libs/utilities"
+    "@h4rdcoder/js-utils": "github:lau-bin/js-utils#master",
+    "near-utils": "github:lau-bin/near-utils#master"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",
