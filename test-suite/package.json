@@ -5,18 +5,18 @@
   "scripts": {
     "start": "NODE_NO_WARNINGS=1 node --loader ts-node/esm --experimental-specifier-resolution=node scripts/util.ts"
   },
-  "type": "module",
   "author": "Lautaro C",
+  "type": "module",
   "dependencies": {
     "bn.js": "^5.2.0",
     "near-api-js": "^0.43.1",
-    "ts-node": "^10.4.0",
+    "ts-node": "^10.7.0",
     "@h4rdcoder/js-utils": "github:lau-bin/js-utils#master",
     "near-utils": "github:lau-bin/near-utils#master"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",
     "@types/node": "14.14.31",
-    "typescript": "^4.6.0-dev.20220203"
+    "typescript": "^4.7.0-dev.20220408"
   }
 }

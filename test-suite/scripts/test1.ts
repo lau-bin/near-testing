@@ -3,12 +3,14 @@ import {deployKatherineFundraising, deployTestMetapool} from "./util.js"
 
 let metapool = await deployTestMetapool("10000000000")
 if (!metapool){
-  throw ""
+  throw "metapool is undefined"
 }
-let katerine = await deployKatherineFundraising(metapool.contract_account.accountId, "100", 1)
-if (!katerine){
-  throw ""
+let kaherine = await deployKatherineFundraising(metapool.contract_account.accountId, "100", 1)
+
+if (!kaherine){
+  throw "katherine is undefined"
 }
 
-Logger.info(metapool)
-Logger.info(katerine)
+Logger.info(metapool, true)
+Logger.info(kaherine, true)
+
