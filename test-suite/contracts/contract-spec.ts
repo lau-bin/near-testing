@@ -75,8 +75,8 @@ export const katerine_ctr = ContractSpec({
         name: "",
         slug: "",
         owner_id: "",
-        open_timestamp: "",
-        close_timestamp: "",
+        open_timestamp: 0,
+        close_timestamp: 0,
         token_contract_address: "",
       }
     },
@@ -88,8 +88,8 @@ export const katerine_ctr = ContractSpec({
         name: "",
         slug: "",
         owner_id: "",
-        open_timestamp: "",
-        close_timestamp: "",
+        open_timestamp: 0,
+        close_timestamp: 0,
         token_contract_address: "",
       }
     }
@@ -102,8 +102,8 @@ export const katerine_ctr = ContractSpec({
         unsuccessful: Array<number>,
       } | null,
       args: {
-        from_index: "",
-        limit: ""
+        from_index: 0,
+        limit: 0
       }
     },
     {
@@ -129,8 +129,8 @@ export const katerine_ctr = ContractSpec({
         open: Array<number>,
       } | null,
       args: {
-        from_index: "",
-        limit: "",
+        from_index: 0,
+        limit: 0,
       }
     },
     {
@@ -256,8 +256,8 @@ export const katerine_ctr = ContractSpec({
       }> | null,
       args: {
         supporter_id: "",
-        from_index: "",
-        limit: "",
+        from_index: 0,
+        limit: 0,
       }
     }
   ]
