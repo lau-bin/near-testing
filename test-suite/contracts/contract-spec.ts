@@ -1,12 +1,13 @@
-import { ContractSpec } from "near-utils";
+import { ContractSpec, asCtrSpec } from "near-utils";
 
-export const katerine_ctr: ContractSpec = {
+export const katerine_ctr = asCtrSpec({
   name: "katerine",
   wasmName: "katherine_fundraising_contract.wasm",
   changeMethods: {
     new: {
       returnValue: undefined,
       args: {
+        owner_id: "",
         min_deposit_amount: "",
         metapool_contract_address: "",
         katherine_fee_percent: 0
@@ -233,8 +234,8 @@ export const katerine_ctr: ContractSpec = {
       }
     }
   }
-}
-export const metapool_ctr: ContractSpec = {
+})
+export const metapool_ctr = asCtrSpec({
   name: "metapool",
   wasmName: "test_meta_pool.wasm",
   changeMethods: {
@@ -252,4 +253,4 @@ export const metapool_ctr: ContractSpec = {
       args: undefined
     }
   }
-}
+})
