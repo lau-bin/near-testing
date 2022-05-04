@@ -56,8 +56,8 @@ export async function deployKatherineFundraising(
 ) {
   try {
     let contract_spec = await import("../contracts/contract-spec.js")
-    let contract_account = await createSubAccount(master_acc, connection, "katerine-ctr", { near: 10, nameSuffixLength: 5 })
-    let owner_account = await createSubAccount(master_acc, connection, "katerine-owner", { near: 1, nameSuffixLength: 5 })
+    let contract_account = await createSubAccount(master_acc, connection, "katerine-ctr", { near: 100, nameSuffixLength: 5 })
+    let owner_account = await createSubAccount(master_acc, connection, "katerine-owner", { near: 100, nameSuffixLength: 5 })
     let min_dep_amount = parseNearAmount(min_deposit_amount_in_near)
     let katerine_ctr = new Contract(contract_account, contract_spec.katerine_ctr, "katerine_ctr")
 
@@ -90,8 +90,8 @@ export async function deployTestMetapool(
 ) {
   try {
     let contract_spec = await import("../contracts/contract-spec.js")
-    let contract_account = await createSubAccount(master_acc, connection, "metapool-ctr", { near: 10, nameSuffixLength: 5 })
-    let owner_account = await createSubAccount(master_acc, connection, "metapool-owner", { near: 1, nameSuffixLength: 5 })
+    let contract_account = await createSubAccount(master_acc, connection, "metapool-ctr", { near: 100, nameSuffixLength: 5 })
+    let owner_account = await createSubAccount(master_acc, connection, "metapool-owner", { near: 100, nameSuffixLength: 5 })
     let total_supply = parseNearAmount(_total_supply)
     let metapool_ctr = new Contract(contract_account, contract_spec.metapool_ctr, "metapool_ctr")
 
@@ -108,6 +108,36 @@ export async function deployTestMetapool(
     )
     return {
       metapool_ctr,
+      owner_account,
+      contract_account
+    }
+  } catch (e) {
+    Logger.error("error deploying metapool contract", true)
+    Logger.error(e as any, true)
+  }
+}
+
+export async function deployTestToken(_total_supply: string){
+  try {
+    let contract_spec = await import("../contracts/contract-spec.js")
+    let contract_account = await createSubAccount(master_acc, connection, "test-token-ctr", { near: 100, nameSuffixLength: 5 })
+    let owner_account = await createSubAccount(master_acc, connection, "test-token-owner", { near: 100, nameSuffixLength: 5 })
+    let total_supply = parseNearAmount(_total_supply)
+    let token_ctr = new Contract(contract_account, contract_spec.metapool_ctr, "test-token_ctr")
+
+    if (!hasValue(total_supply)) {
+      throw "error converting total_supply to yocto"
+    }
+    await deployContract(contract_account, join(__dirname, "..", "res", contract_spec.testToken_ctr.wasmName))
+    await token_ctr.call.new_default_meta(
+      master_acc,
+      {
+        owner_id: owner_account.accountId,
+        total_supply
+      }
+    )
+    return {
+      token_ctr: token_ctr,
       owner_account,
       contract_account
     }

@@ -1,4 +1,4 @@
-import { ContractSpec, asCtrSpec } from "near-utils";
+import { asCtrSpec } from "near-utils";
 
 export const katerine_ctr = asCtrSpec({
   name: "katerine",
@@ -11,7 +11,7 @@ export const katerine_ctr = asCtrSpec({
         min_deposit_amount: "",
         metapool_contract_address: "",
         katherine_fee_percent: 0
-      }
+      },
     },
     process_kickstarter: {
       returnValue: undefined,
@@ -67,6 +67,8 @@ export const katerine_ctr = asCtrSpec({
         open_timestamp: 0,
         close_timestamp: 0,
         token_contract_address: "",
+        deposits_hard_cap: "",
+        max_tokens_to_release_per_stnear: ""
       }
     },
     update_kickstarter: {
@@ -80,9 +82,29 @@ export const katerine_ctr = asCtrSpec({
         close_timestamp: 0,
         token_contract_address: "",
       }
+    },
+    create_goal: {
+      returnValue: 0,
+      args: {
+        kickstarter_id: 0,
+        name: "",
+        desired_amount: "",
+        unfreeze_timestamp: 0,
+        tokens_to_release_per_stnear: "",
+        cliff_timestamp: 0,
+        end_timestamp: 0,
+        reward_installments: 0
+      }
     }
   },
   viewMethods: {
+    get_kickstarters_to_unfreeze: {
+      args: {
+        from_index: 0,
+        limit: 0
+      },
+      returnValue: "" as unknown as Array<number> | null
+    },
     get_kickstarters_to_process: {
       returnValue: "" as unknown as {
         successful: Array<number>,
@@ -244,6 +266,68 @@ export const metapool_ctr = asCtrSpec({
       args: {
         owner_id: "",
         total_supply: ""
+      }
+    },
+    ft_transfer: {
+      returnValue: undefined,
+      args: {
+        receiver_id: "",
+        amount: ""
+      }
+    },
+    ft_transfer_call: {
+      returnValue: undefined,
+      args: {
+        receiver_id: "",
+        amount: "",
+        msg: ""
+      }
+    },
+    register_account: {
+      returnValue: undefined,
+      args: {
+        account_id: ""
+      }
+    }
+  },
+  viewMethods: {
+    get_st_near_price: {
+      returnValue: "",
+      args: undefined
+    }
+  }
+})
+
+export const testToken_ctr = asCtrSpec({
+  name: "test-token",
+  wasmName: "test_p_token.wasm",
+  changeMethods: {
+    new_default_meta: {
+      returnValue: undefined,
+      args: {
+        owner_id: "",
+        total_supply: ""
+      }
+    },
+    ft_transfer: {
+      returnValue: undefined,
+      args: {
+        receiver_id: "",
+        amount: ""
+      }
+    },
+    ft_transfer_call: {
+      returnValue: undefined,
+      args: {
+        receiver_id: "",
+        amount: "",
+        msg: ""
+      }
+    },
+    register_account: {
+      returnValue: undefined,
+      args: {
+        account_id: ""
       }
     }
   },
