@@ -1,6 +1,0 @@
-openssl genpkey -algorithm ed25519 -outform PEM -out test25519.pem
-openssl pkey -outform DER -pubout -in test25519.pem | tail -c +13 | openssl base64
-
-target/debug/near-sandbox --home /tmp/near-sandbox init
-target/debug/near-sandbox --home /tmp/near-sandbox run
-rm -r /tmp/near-sandbox
